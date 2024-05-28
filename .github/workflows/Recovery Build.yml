@@ -77,6 +77,11 @@ jobs:
         cd scripts
         sudo bash setup/android_build_env.sh
 
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        max-size: "10G" 
+
     - name: Sync OrangeFox sources and minimal manifest
       run: |
         mkdir OrangeFox_sync
