@@ -91,16 +91,12 @@ jobs:
         ./orangefox_sync.sh --branch ${{ inputs.MANIFEST_BRANCH }} --path ${{ github.workspace }}/fox_${{ inputs.MANIFEST_BRANCH }}
         sed -i "s/TeamWin/OrangeFox/g" ${{ github.workspace }}/fox_${{ inputs.MANIFEST_BRANCH }}/vendor/twrp/build/tools/roomservice.py
 
-     - name: Sync Device Dependencies (AOSP)
-      if: ${{ steps.buildtree.outputs.value == 'aosp' }}
-      run: |
-        source build/envsetup.sh
-        lunch twrp_${{ inputs.DEVICE_NAME }}-eng
-      working-directory: workspace
-      id: syncdevicedeps
-      continue-on-error: true 
+ 
 
     - name: Place device trees and kernel
+       if: |
+        !contains( inputs.DEVICE_TREE_URL,'/TeamWin/' )
+        && steps.buildtree.outputs.value == 'aosp'
       run: |
         mkdir -p .repo/local_manifests
         cp -f ${GITHUB_WORKSPACE}/templates/roomservice.xml .repo/local_manifests/
@@ -116,6 +112,15 @@ jobs:
         sed -i "s%{DEVICE_TREE_BRANCH}\"/-->%${{ inputs.DEVICE_TREE_BRANCH }}\"/>%g" .repo/local_manifests/roomservice.xml
         repo sync ${{ inputs.DEVICE_PATH }} -j$(nproc --all)
       working-directory: fox_${{ inputs.MANIFEST_BRANCH }}
+
+     - name: Sync Device Dependencies (AOSP)
+      if: ${{ steps.buildtree.outputs.value == 'aosp' }}
+      run: |
+        source build/envsetup.sh
+        lunch twrp_${{ inputs.DEVICE_NAME }}-eng
+      working-directory: workspace
+      id: syncdevicedeps
+      continue-on-error: true 
       
     - name: Build it
       run: |
