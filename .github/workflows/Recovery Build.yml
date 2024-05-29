@@ -77,6 +77,14 @@ jobs:
         cd scripts
         sudo bash setup/android_build_env.sh
 
+    - name: Check Build Tree
+      uses: haya14busa/action-cond@v1.2.1
+      id: buildtree
+      with:
+        cond: ${{ inputs.MANIFEST_BRANCH == '11.0' || inputs.MANIFEST_BRANCH == '12.1' }}
+        if_true: aosp
+        if_false: omni
+
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
