@@ -111,7 +111,7 @@ jobs:
         repo sync ${{ inputs.DEVICE_PATH }} -j$(nproc --all)
       working-directory: fox_${{ inputs.MANIFEST_BRANCH }}
 
-     - name: Sync Device Dependencies (AOSP)
+    - name: Sync Device Dependencies (AOSP)
       if: ${{ steps.buildtree.outputs.value == 'aosp' }}
       run: |
         source build/envsetup.sh
