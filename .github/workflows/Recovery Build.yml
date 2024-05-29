@@ -124,9 +124,9 @@ jobs:
       run: |
         source build/envsetup.sh
         lunch twrp_${{ inputs.DEVICE_NAME }}-eng
-      working-directory: workspace
+      working-directory: fox_${{ inputs.MANIFEST_BRANCH }}
       id: syncdevicedeps
-      continue-on-error: true 
+      continue-on-error: false
       
     - name: Build it
       run: |
