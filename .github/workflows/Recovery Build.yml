@@ -91,23 +91,6 @@ jobs:
         ./orangefox_sync.sh --branch ${{ inputs.MANIFEST_BRANCH }} --path ${{ github.workspace }}/fox_${{ inputs.MANIFEST_BRANCH }}
         sed -i "s/TeamWin/OrangeFox/g" ${{ github.workspace }}/fox_${{ inputs.MANIFEST_BRANCH }}/vendor/twrp/build/tools/roomservice.py
 
-    - name: Build it
-      run: |
-        set +e
-        source build/envsetup.sh
-        set -e
-        export ALLOW_MISSING_DEPENDENCIES=true
-        export FOX_BUILD_DEVICE=${{ inputs.DEVICE_NAME }}
-        export LC_ALL="C"
-        if [ -n "${{ inputs.OPTIONAL_FLAGS}}" ]; then
-          ${{ inputs.OPTIONAL_FLAGS }}
-          echo -e "Additional Command(s): ${{ inputs.OPTIONAL_FLAGS }}"
-        else
-          echo "No additional commands specified."
-        fi
-        lunch twrp_${{ inputs.DEVICE_NAME }}-eng && mka $(tr -d _ <<< ${{ inputs.BUILD_TARGET }})image
-      working-directory: fox_${{ inputs.MANIFEST_BRANCH }}
-      
     - name: Place device trees and kernel
       run: |
         mkdir -p .repo/local_manifests
@@ -122,16 +105,7 @@ jobs:
         sed -i "s%{DEVICE_PATH}%${{ inputs.DEVICE_PATH }}%g" .repo/local_manifests/roomservice.xml
         sed -i "s%{DEVICE_REMOTE_NAME}%${REMOTE_NAME}%g" .repo/local_manifests/roomservice.xml
         sed -i "s%{DEVICE_TREE_BRANCH}\"/-->%${{ inputs.DEVICE_TREE_BRANCH }}\"/>%g" .repo/local_manifests/roomservice.xml
-
-        python -c "
-        import json
-        with open('ofox.dependencies', 'r') as f:
-        dependencies = json.load(f)
-        for dep in dependencies:
-        print('Syncing {} from {} branch'.format(dep['repository'], dep['branch']))
-        !repo sync dep['target_path'] -b dep['branch'] -j$(nproc --all)
-        "
-        repo sync ${{ inputs.DEVICE_PATH }} -b ${{ inputs.DEVICE_TREE_BRANCH }} -j$(nproc --all)
+        repo sync ${{ inputs.DEVICE_PATH }} -j$(nproc --all)
       working-directory: fox_${{ inputs.MANIFEST_BRANCH }}
       
     - name: Build it
