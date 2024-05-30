@@ -90,14 +90,12 @@ jobs:
         cd sync
         ./orangefox_sync.sh --branch ${{ inputs.MANIFEST_BRANCH }} --path ${{ github.workspace }}/fox_${{ inputs.MANIFEST_BRANCH }}
         sed -i "s/TeamWin/OrangeFox/g" ${{ github.workspace }}/fox_${{ inputs.MANIFEST_BRANCH }}/vendor/twrp/build/tools/roomservice.py
-        
-    - name: Sync Device Dependencies (AOSP)
+
+    - name: Install Python 3
       run: |
-        source build/envsetup.sh
-        lunch twrp_${{ inputs.DEVICE_NAME }}-eng
-      working-directory: fox_${{ inputs.MANIFEST_BRANCH }}
-      id: syncdevicedeps
-      continue-on-error: false  
+        sudo apt -y install python3
+        cd /usr/bin
+        sudo ln -sf python3 python
 
     - name: Place device trees and kernel
       run: |
@@ -113,7 +111,16 @@ jobs:
         sed -i "s%{DEVICE_PATH}%${{ inputs.DEVICE_PATH }}%g" .repo/local_manifests/roomservice.xml
         sed -i "s%{DEVICE_REMOTE_NAME}%${REMOTE_NAME}%g" .repo/local_manifests/roomservice.xml
         sed -i "s%{DEVICE_TREE_BRANCH}\"/-->%${{ inputs.DEVICE_TREE_BRANCH }}\"/>%g" .repo/local_manifests/roomservice.xml
-        repo sync ${{ inputs.DEVICE_PATH }} -j$(nproc --all)
+
+        python -c "
+        import json
+        with open('ofox.dependencies', 'r') as f:
+        dependencies = json.load(f)
+        for dep in dependencies:
+        print('Syncing {} from {} branch'.format(dep['repository'], dep['branch']))
+        !repo sync dep['target_path'] -b dep['branch'] -j$(nproc --all)
+        "
+        repo sync ${{ inputs.DEVICE_PATH }} -b ${{ inputs.DEVICE_TREE_BRANCH }} -j$(nproc --all)
       working-directory: fox_${{ inputs.MANIFEST_BRANCH }}
       
     - name: Build it
